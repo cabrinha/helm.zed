@@ -1,0 +1,15 @@
+name = "Helm"
+grammar = "helm"
+path_suffixes = [
+    "gotmpl",
+    "helmfile.yaml",
+    "*/templates/*.tpl",
+    "*/templates/*.yaml",
+    "*/templates/*.yml",
+]
+block_comment = ["{{/* ", " */}}"]
+brackets = [
+    { start = "{{", end = "}}", close = true, newline = false },
+    { start = "{{-", end = "-}}", close = true, newline = false },
+    { start = "(", end = ")", close = true, newline = false },
+]
