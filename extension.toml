@@ -1,0 +1,12 @@
+id = "helm"
+name = "Helm"
+version = "0.0.1"
+schema_version = 1
+authors = ["cabrinha <yuppie@hey.com>"]
+description = "Syntax highlighting for Helm templates"
+repository = "https://github.com/cabrinha/helm.zed"
+
+[grammars.helm]
+repository = "https://github.com/ngalaiko/tree-sitter-go-template"
+commit = "17144a77be0acdecebd9d557398883569fed41de"
+path = "dialects/helm"

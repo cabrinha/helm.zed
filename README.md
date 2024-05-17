@@ -1,2 +1,6 @@
 # helm.zed
-Zed extension for helm template syntax
+
+Syntax highlighting for Helm templates
+
+## Credits
+https://github.com/ngalaiko/tree-sitter-go-template
