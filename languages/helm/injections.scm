@@ -1,2 +1,3 @@
 ((text) @content
-  (#set! "language" "yaml"))
+    (#set! "language" "yaml")
+    (#set! "combined"))
