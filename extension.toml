@@ -2,9 +2,17 @@ id = "helm"
 name = "Helm"
 version = "0.0.1"
 schema_version = 1
-authors = ["cabrinha <yuppie@hey.com>"]
+authors = [
+    "cabrinha <yuppie@hey.com>",
+    "MrJosh <hi@mrjosh.me>",
+    "Hemant Joshi <mail@hjoshi.me>",
+]
 description = "Syntax highlighting for Helm templates"
 repository = "https://github.com/cabrinha/helm.zed"
+
+[language_servers.helm]
+name = "helm_ls"
+language = "Helm"
 
 [grammars.helm]
 repository = "https://github.com/ngalaiko/tree-sitter-go-template"
