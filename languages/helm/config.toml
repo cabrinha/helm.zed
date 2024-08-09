@@ -3,9 +3,8 @@ grammar = "helm"
 path_suffixes = [
     "gotmpl",
     "helmfile.yaml",
-    "*/templates/*.tpl",
-    "*/templates/*.yaml",
-    "*/templates/*.yml",
+    "templates/**/*.tpl",
+    "templates/**/*.yaml",
 ]
 line_comments = ["# "]
 block_comment = ["{{/* ", " */}}"]
