@@ -14,7 +14,7 @@ impl zed::Extension for HelmExtension {
     ) -> Result<zed::Command> {
         let path = worktree
             .which("helm_ls")
-            .ok_or_else(|| "Helm is not installed".to_string())?;
+            .ok_or_else(|| "The LSP for helm 'helm-ls' is not installed".to_string())?;
 
         Ok(zed::Command {
             command: path,
