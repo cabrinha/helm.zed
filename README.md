@@ -8,7 +8,7 @@ The extensions relies on the PATH environment variable and first look for 'helm_
 
 ## Configuration
 
-This is an example of providing configuration for the language server via Zed's `settings.json`.
+This is an example of providing configuration for the language server via Zed's `settings.json`. For full reference of possible values, refer to https://github.com/mrjosh/helm-ls.
 
 ```json
 {
