@@ -1,14 +1,14 @@
 # helm.zed
 
-Syntax highlighting for Helm templates by providing integration with https://github.com/mrjosh/helm-ls.
+Syntax highlighting for Helm templates using tree-sitter and integration of [helm-ls](https://github.com/mrjosh/helm-ls).
 
 ## Installation
 
-The extensions relies on the PATH environment variable and first look for 'helm_ls', then 'helm-ls'. If none is available, an error is showed.
+The extension relies on the PATH environment variable and first looks for 'helm_ls', then 'helm-ls'. If neither is available, an error is shown.
 
 ## Configuration
 
-This is an example of providing configuration for the language server via Zed's `settings.json`. For full reference of possible values, refer to https://github.com/mrjosh/helm-ls.
+This is an example of providing configuration for the language server via Zed's `settings.json`. For full reference of possible values, refer to  [helm-ls configuration section](https://github.com/mrjosh/helm-ls/?tab=readme-ov-file#configuration-options).
 
 ```json
 {
@@ -17,7 +17,7 @@ This is an example of providing configuration for the language server via Zed's 
     "helm_ls": {
       "settings": {
         "helm-ls": {
-          "logLevel": "warning",
+          "logLevel": "info",
           "yamlls": {
             "enabled": true
           }
