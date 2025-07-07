@@ -1,0 +1,8 @@
+# Build artifacts
+grammars/
+target/
+Cargo.lock
+extension.wasm
+
+# Don't push local config file of https://github.com/jdx/mise
+mise.local.toml
