@@ -30,3 +30,16 @@ This is an example of providing configuration for the language server via Zed's 
 
 ## Credits
 https://github.com/ngalaiko/tree-sitter-go-template
+
+## Release Process
+
+Every time the extension is released:
+
+1. **Bump the Version:**  
+   Update the version number in Cargo.toml.
+
+2. **Update Extension Index:**  
+   After releasing, update the extension entry in [zed-industries/extensions](http://github.com/zed-industries/extensions/) to reflect the new version.
+
+This ensures users always have access to the latest
+
