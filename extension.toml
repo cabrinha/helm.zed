@@ -1,6 +1,6 @@
 id = "helm"
 name = "Helm"
-version = "0.0.1"
+version = "0.0.2"
 schema_version = 1
 authors = [
     "cabrinha <yuppie@hey.com>",

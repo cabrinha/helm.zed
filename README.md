@@ -8,7 +8,7 @@ The extension relies on the PATH environment variable and first looks for 'helm_
 
 ## Configuration
 
-This is an example of providing configuration for the language server via Zed's `settings.json`. For full reference of possible values, refer to  [helm-ls configuration section](https://github.com/mrjosh/helm-ls/?tab=readme-ov-file#configuration-options).
+This is an example of providing configuration for the language server via Zed's `settings.json`. For full reference of possible values, refer to [helm-ls configuration section](https://github.com/mrjosh/helm-ls/?tab=readme-ov-file#configuration-options).
 
 ```json
 {
@@ -29,6 +29,7 @@ This is an example of providing configuration for the language server via Zed's 
 ```
 
 ## Credits
+
 https://github.com/ngalaiko/tree-sitter-go-template
 
 ## Release Process
@@ -36,10 +37,9 @@ https://github.com/ngalaiko/tree-sitter-go-template
 Every time the extension is released:
 
 1. **Bump the Version:**  
-   Update the version number in Cargo.toml.
+   Update the version number in Cargo.toml and extension.toml.
 
 2. **Update Extension Index:**  
    After releasing, update the extension entry in [zed-industries/extensions](http://github.com/zed-industries/extensions/) to reflect the new version.
 
 This ensures users always have access to the latest
-
