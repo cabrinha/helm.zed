@@ -1,6 +1,7 @@
 name = "Helm"
 grammar = "helm"
 line_comments = ["# "]
+path_suffixes = [".helmignore"]
 block_comment = ["{{/* ", " */}}"]
 brackets = [
     { start = "{{", end = "}}", close = true, newline = false },
