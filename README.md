@@ -4,8 +4,8 @@ Syntax highlighting for Helm templates using tree-sitter and integration of [hel
 
 ## Installation
 
-The extension relies on the PATH environment variable and first looks for `helm_ls`, then `helm-ls`.
-If neither is available, an error is shown.
+The extension relies on the PATH environment variable and first looks for
+`helm_ls`, then `helm-ls`. If neither is available, an error is shown.
 
 ## File Type Association
 
