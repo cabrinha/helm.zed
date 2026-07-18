@@ -4,8 +4,13 @@ Syntax highlighting for Helm templates using tree-sitter and integration of [hel
 
 ## Installation
 
-The extension relies on the PATH environment variable and first looks for 'helm_ls',
-then 'helm-ls'. If neither is available, an error is shown.
+Before the extension is working properly, you have to install the [helm-ls](https://github.com/mrjosh/helm-ls#installation-with-a-package-manager)
+and [yaml-languages-server](https://github.com/redhat-developer/yaml-language-server) with your preferred package manager.
+
+Install this extension via the [Zed extension store](https://zed.dev/extensions/helm).
+
+The extension relies on the PATH environment variable and first looks for 'helm_ls', then 'helm-ls'.
+If neither is available, an error is shown.
 
 ## Configuration
 
@@ -26,13 +31,29 @@ For full reference of possible values, refer to [helm-ls configuration section](
         }
       }
     }
-  }
+  },
+  "file_types": {
+    "Helm": [
+      "helmfile.yaml",
+      "helmfile.yml",
+      "Chart.yaml",
+      "Chart.yml",
+      "Chart.lock",
+      "requirements.yaml",
+      "requirements.yml",
+      "**/templates/**/*.tpl",
+      "**/templates/**/*.yaml",
+      "**/templates/**/*.yml",
+      "**/helmfile.d/**/*.yaml",
+      "**/helmfile.d/**/*.yml",
+    ],
+  },
 }
 ```
 
 ## Credits
 
-https://github.com/ngalaiko/tree-sitter-go-template
+[https://github.com/ngalaiko/tree-sitter-go-template]
 
 ## Release Process
 
@@ -44,4 +65,4 @@ Every time the extension is released:
 2. **Update Extension Index:**
    After releasing, update the extension entry in [zed-industries/extensions](http://github.com/zed-industries/extensions/) to reflect the new version.
 
-This ensures users always have access to the latest
+This ensures users always have access to the newest version.
