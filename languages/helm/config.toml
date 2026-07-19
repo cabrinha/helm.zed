@@ -2,6 +2,8 @@ name = "Helm"
 grammar = "helm"
 line_comments = ["# "]
 path_suffixes = [".helmignore"]
+tab_size = 2
+word_characters = ["-"]
 block_comment = ["{{/* ", " */}}"]
 brackets = [
     { start = "{{", end = "}}", close = true, newline = false },
