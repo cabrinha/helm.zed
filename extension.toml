@@ -16,5 +16,5 @@ language = "Helm"
 
 [grammars.helm]
 repository = "https://github.com/ngalaiko/tree-sitter-go-template"
-commit = "9d3f6e526dd074b9edae9070b7bb778f00e87a5b"
+commit = "aa71f63de226c5592dfbfc1f29949522d7c95fac"
 path = "dialects/helm"
