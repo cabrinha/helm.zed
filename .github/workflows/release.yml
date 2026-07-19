@@ -11,7 +11,7 @@ jobs:
       - uses: huacnlee/zed-extension-action@v2
         with:
           extension-name: helm
-          push-to: cabrinha/zed-extensions
+          push-to: cabrinha/extensions
         env:
           # the personal access token should have "repo" & "workflow" scopes
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
