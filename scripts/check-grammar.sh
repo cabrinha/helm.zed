@@ -78,15 +78,66 @@ for query in "$ROOT"/languages/helm/*.scm; do
   fi
 done
 
-# Zed also refuses to load Helm if injections.scm uses both @content and
-# @injection.content. tree-sitter query accepts that; Zed does not.
+# Zed's language_registry rejects mixed old/new injection capture names
+# (`both content and injection.content captures are present`). tree-sitter
+# query compiles that file; this check is what actually matches Zed.log.
+injection_has_capture() {
+  local file="$1" name="$2"
+  grep -vE '^\s*;' "$file" | grep -oE '@[A-Za-z0-9_.]+' | sed 's/^@//' | grep -qx "$name"
+}
+
+zed_injection_query_ok() {
+  local file="$1"
+  if injection_has_capture "$file" content \
+    && injection_has_capture "$file" injection.content; then
+    echo "both content and injection.content captures are present" >&2
+    return 1
+  fi
+  if injection_has_capture "$file" language \
+    && injection_has_capture "$file" injection.language; then
+    echo "both language and injection.language captures are present" >&2
+    return 1
+  fi
+  if ! injection_has_capture "$file" content \
+    && ! injection_has_capture "$file" injection.content; then
+    echo "missing required capture: content or injection.content" >&2
+    return 1
+  fi
+  # Combined YAML injection stitches fragments around {{ }} (#22 emptyDir: {}).
+  if ! grep -vE '^\s*;' "$file" | grep -Eq '(^|[^A-Za-z0-9_.])(injection\.)?combined($|[^A-Za-z0-9_.])'; then
+    echo "missing combined / injection.combined (needed for emptyDir: {})" >&2
+    return 1
+  fi
+  return 0
+}
+
 injections="$ROOT/languages/helm/injections.scm"
-if grep -E '^[^;]*@content' "$injections" >/dev/null \
-  && grep -E '^[^;]*@injection\.content' "$injections" >/dev/null; then
-  echo "QUERY FAILED injections.scm: both content and injection.content captures"
+if zed_injection_query_ok "$injections" 2>"$WORK/inj.err"; then
+  echo "ok  injections use one content capture style"
+else
+  echo "QUERY FAILED injections.scm: $(tr '\n' ' ' <"$WORK/inj.err")"
+  fail=1
+fi
+
+# The exact dual-capture query Zed rejected must not pass this check.
+cat >"$WORK/dual-injections.scm" <<'EOF'
+((text) @content @injection.content
+ (#set! "language" "yaml")
+ (#set! "injection.language" "yaml")
+ (#set! "combined")
+ (#set! "injection.combined"))
+EOF
+if tree-sitter query "$WORK/dual-injections.scm" "$sample" >/dev/null 2>&1; then
+  echo "ok  tree-sitter query accepts dual captures (Zed does not)"
+else
+  echo "unexpected: tree-sitter query rejected dual captures"
+  fail=1
+fi
+if zed_injection_query_ok "$WORK/dual-injections.scm" 2>"$WORK/dual.err"; then
+  echo "QUERY CHECK MISSED dual content captures"
   fail=1
 else
-  echo "ok  injections use one content capture style"
+  echo "ok  detector rejects dual captures: $(tr '\n' ' ' <"$WORK/dual.err")"
 fi
 
 # Builtin captures for include/tpl/sha512sum, which the old regex list missed.
