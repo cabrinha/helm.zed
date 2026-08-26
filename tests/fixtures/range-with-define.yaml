@@ -1,0 +1,49 @@
+{{- range $index, $host := .Values.ingress.hosts }}
+{{- if $host.paths }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "mychart.fullname" $ }}-{{ $index }}
+spec:
+  rules:
+    - host: {{ $host.host | quote }}
+      http:
+        paths:
+          {{- range $host.paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ include "mychart.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+{{- end }}
+{{- end }}
+
+{{- with .Values.tolerations }}
+tolerations:
+  {{- toYaml . | nindent 2 }}
+{{- else }}
+tolerations: []
+{{- end }}
+
+{{- $root := . }}
+{{- range .Values.items }}
+{{- if eq .skip true }}
+{{- continue }}
+{{- end }}
+{{- if ge $root.Values.max 10 }}
+{{- break }}
+{{- end }}
+name: {{ .name | required "items[].name is required" }}
+{{- end }}
+
+{{/* sprig and helm helpers */}}
+checksum: {{ include "mychart.labels" . | sha256sum }}
+json: {{ .Values.config | toJson }}
+pretty: {{ .Values.config | toYamlPretty }}
+sha512: {{ "hello" | sha512sum }}
+allTrue: {{ all .Values.a .Values.b }}
+anyTrue: {{ any .Values.a .Values.b }}
+nested: {{ tpl (include "mychart.name" .) . }}

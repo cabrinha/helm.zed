@@ -1,0 +1,19 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  grammar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Parse Helm fixtures
+        run: bash scripts/check-grammar.sh

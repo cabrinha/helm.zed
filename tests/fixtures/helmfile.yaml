@@ -1,0 +1,18 @@
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+releases:
+  - name: {{ .Environment.Name }}-app
+    namespace: {{ .Namespace | default "default" }}
+    chart: bitnami/nginx
+    installed: {{ .Values.nginx.enabled | default true }}
+    values:
+      - replicaCount: {{ .Values.replicaCount | default 1 }}
+      - image:
+          tag: {{ .Values.image.tag | quote }}
+      {{- if .Values.ingress.enabled }}
+      - ingress:
+          enabled: true
+          hostname: {{ .Values.ingress.host | quote }}
+      {{- end }}

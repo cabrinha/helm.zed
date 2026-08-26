@@ -1,6 +1,6 @@
 id = "helm"
 name = "Helm"
-version = "0.0.6"
+version = "0.0.7"
 schema_version = 1
 authors = [
     "cabrinha <yuppie@hey.com>",
@@ -14,7 +14,13 @@ repository = "https://github.com/cabrinha/helm.zed"
 name = "helm_ls"
 language = "Helm"
 
+# helm-ls only treats languageId "helm" (lowercase) as a template document.
+[language_servers.helm.language_ids]
+Helm = "helm"
+
+# Pinned to the empty-braces lexer fix (ngalaiko/tree-sitter-go-template#53).
+# `{}` stays one text node so YAML combined injection survives incremental edits.
 [grammars.helm]
-repository = "https://github.com/ngalaiko/tree-sitter-go-template"
-commit = "aa71f63de226c5592dfbfc1f29949522d7c95fac"
+repository = "https://github.com/tzabbi/tree-sitter-go-template"
+commit = "ee8ba702dd0421c4e374b05175e2efbc6a0ecc0b"
 path = "dialects/helm"
