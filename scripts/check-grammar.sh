@@ -63,6 +63,21 @@ if grep -q ERROR <<<"$xml"; then
   fail=1
 fi
 
+# Compile every query against the pinned helm grammar. Zed refuses to
+# register the language if any query names a node type the grammar lacks
+# (that is how a backtick pair in brackets.scm made Helm vanish).
+sample="$ROOT/tests/fixtures/empty-mapping.yaml"
+for query in "$ROOT"/languages/helm/*.scm; do
+  name="$(basename "$query")"
+  if ! tree-sitter query "$query" "$sample" >/dev/null 2>"$WORK/query.err"; then
+    echo "QUERY FAILED $name"
+    cat "$WORK/query.err"
+    fail=1
+  else
+    echo "ok  query  $name"
+  fi
+done
+
 # Builtin captures for include/tpl/sha512sum, which the old regex list missed.
 query_out="$(tree-sitter query "$ROOT/languages/helm/highlights.scm" \
   "$ROOT/tests/fixtures/range-with-define.yaml" 2>/dev/null || true)"
