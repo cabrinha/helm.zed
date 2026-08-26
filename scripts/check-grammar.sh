@@ -78,6 +78,17 @@ for query in "$ROOT"/languages/helm/*.scm; do
   fi
 done
 
+# Zed also refuses to load Helm if injections.scm uses both @content and
+# @injection.content. tree-sitter query accepts that; Zed does not.
+injections="$ROOT/languages/helm/injections.scm"
+if grep -E '^[^;]*@content' "$injections" >/dev/null \
+  && grep -E '^[^;]*@injection\.content' "$injections" >/dev/null; then
+  echo "QUERY FAILED injections.scm: both content and injection.content captures"
+  fail=1
+else
+  echo "ok  injections use one content capture style"
+fi
+
 # Builtin captures for include/tpl/sha512sum, which the old regex list missed.
 query_out="$(tree-sitter query "$ROOT/languages/helm/highlights.scm" \
   "$ROOT/tests/fixtures/range-with-define.yaml" 2>/dev/null || true)"
