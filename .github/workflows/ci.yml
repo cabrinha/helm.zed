@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  rust:
+    name: Rust tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - name: Unit tests
+        run: cargo test
+      - name: WASM build
+        run: cargo build --target wasm32-wasip1 --release
+
+  queries:
+    name: Chart fixtures and queries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Parse fixtures and check queries
+        run: bash scripts/check-queries.sh
