@@ -25,3 +25,7 @@ brackets = [
     { start = "\"", end = "\"", close = true, newline = false },
     { start = "`", end = "`", close = true, newline = false },
 ]
+decrease_indent_patterns = [
+    { pattern = "^\\s*\\{\\{-?\\s*else(\\s+if)?\\b", valid_after = ["if", "range", "with"] },
+    { pattern = "^\\s*\\{\\{-?\\s*end\\b" },
+]

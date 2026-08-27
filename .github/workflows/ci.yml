@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  ZED_EXTENSION_CLI_SHA: 9ee3c503a4bbbc6b4a0f8a789acca4871d773223
+
+jobs:
+  rust:
+    name: Rust tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - name: Unit tests
+        run: cargo test
+      - name: WASM build
+        run: cargo build --target wasm32-wasip1 --release
+
+  grammar-pin:
+    name: Grammar pin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Check pin lock and generated files
+        run: bash scripts/check-grammar-pin.sh
+
+  zed-query-load:
+    name: Zed query load
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Reject queries Zed cannot register
+        run: bash scripts/check-zed-queries.sh
+
+  queries:
+    name: Chart fixtures and queries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Parse fixtures and check queries
+        run: bash scripts/check-queries.sh
+
+  package:
+    name: Package extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1, wasm32-wasip2
+      - id: cache-zed-extension-cli
+        name: Cache zed-extension CLI
+        uses: actions/cache@v4
+        with:
+          path: zed-extension
+          key: zed-extension-${{ env.ZED_EXTENSION_CLI_SHA }}
+      - name: Download zed-extension CLI
+        if: steps.cache-zed-extension-cli.outputs.cache-hit != 'true'
+        run: |
+          wget --quiet "https://zed-extension-cli.nyc3.digitaloceanspaces.com/${ZED_EXTENSION_CLI_SHA}/x86_64-unknown-linux-gnu/zed-extension" -O "$GITHUB_WORKSPACE/zed-extension"
+          chmod +x "$GITHUB_WORKSPACE/zed-extension"
+      - name: Package with zed-extension
+        run: |
+          chmod +x "$GITHUB_WORKSPACE/zed-extension"
+          mkdir -p /tmp/ext-scratch /tmp/ext-output
+          "$GITHUB_WORKSPACE/zed-extension" --source-dir . --scratch-dir /tmp/ext-scratch --output-dir /tmp/ext-output
+
+  query-format:
+    name: Query format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download ts_query_ls
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download v3.15.1 --repo ribru17/ts_query_ls --pattern ts_query_ls-x86_64-unknown-linux-gnu.tar.gz --dir "$GITHUB_WORKSPACE"
+      - name: ts_query_ls format --check languages
+        run: |
+          tar -xf "$GITHUB_WORKSPACE/ts_query_ls-x86_64-unknown-linux-gnu.tar.gz" -C "$GITHUB_WORKSPACE"
+          "$GITHUB_WORKSPACE/ts_query_ls" format --check languages || {
+            echo "Found unformatted queries, please format them with ts_query_ls."
+            echo "For easy use, install the Tree-sitter query extension:"
+            echo "zed://extension/tree-sitter-query"
+            false
+          }

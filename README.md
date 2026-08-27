@@ -6,7 +6,9 @@ Syntax highlighting for Helm templates using tree-sitter, plus [helm-ls](https:/
 
 Install from the [Zed extension store](https://zed.dev/extensions/helm).
 
-The extension looks for `helm_ls`, then `helm-ls`, on PATH. If neither is there it downloads a helm-ls release. [yaml-language-server](https://github.com/redhat-developer/yaml-language-server) is optional; helm-ls uses it for Kubernetes schema diagnostics when it is installed.
+You do not need to install helm-ls first. The extension looks for `helm_ls`, then `helm-ls`, on PATH. If neither is there, it downloads a pinned helm-ls release and reuses that binary on later Zed starts.
+
+[yaml-language-server](https://github.com/redhat-developer/yaml-language-server) is still required for full LSP. helm-ls shells out to it for Kubernetes schema validation. Without it you get Helm template intelligence only.
 
 You can also pin a binary:
 
@@ -25,7 +27,7 @@ You can also pin a binary:
 
 ## File detection
 
-`.tpl`, `.gotmpl`, `helmfile.yaml`, and `helmfile.yml` are Helm out of the box. Chart templates still share `.yaml` with ordinary YAML, so map those in `settings.json`:
+This matches the [official Zed Helm docs](https://zed.dev/docs/languages/helm). `.tpl`, `.gotmpl`, `helmfile.yaml`, and `helmfile.yml` are Helm out of the box. Chart templates still share `.yaml` with ordinary YAML, so map those in `settings.json`:
 
 ```json
 {
@@ -46,9 +48,11 @@ You can also pin a binary:
 }
 ```
 
-Leave `Chart.yaml` as YAML. It is chart metadata, not a template.
+Leave `Chart.yaml` as YAML. It is chart metadata, not a template. Path globs such as `charts/*/templates/*.yaml` are not valid in `languages/helm/config.toml` `path_suffixes`; those stay in `file_types`.
 
 If a `.yaml` file still opens as YAML, pick Helm in the language selector once, or add the glob above. helm-ls will not start on files that stay tagged as YAML, and yaml-language-server will flag `{{ }}` as errors.
+
+`**/values*.yaml` is included because helm-ls understands values files.
 
 ## Language server settings
 
@@ -93,6 +97,18 @@ Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/
 ## Empty mappings (`emptyDir: {}`)
 
 The vendored helm grammar keeps `{}`, the rest of that line, and the trailing newline as one text token so typing at EOL after `emptyDir: {}` does not sit on the next node's start. YAML is injected per `(text)` node, not combined ([zed#57341](https://github.com/zed-industries/zed/issues/57341)).
+
+## Testing
+
+```sh
+cargo test
+./scripts/check-queries.sh
+./scripts/check-grammar.sh
+./scripts/check-grammar-pin.sh
+./scripts/check-zed-queries.sh
+```
+
+CI also packages with the `zed-extension` CLI and runs `ts_query_ls format --check languages`.
 
 ## Credits
 
