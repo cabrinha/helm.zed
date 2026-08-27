@@ -1,10 +1,10 @@
-; YAML highlighting for template text. Combined so fragments around {{ }}
-; stitch into one YAML document. Use only @content: Zed errors if
-; @content and @injection.content are both set on the same pattern.
+; YAML highlighting for each (text) node. Use only @content: Zed errors
+; if @content and @injection.content are both set on the same pattern.
 ;
-; Combined injection is required for a single YAML document. Zed still
-; drops that layer on incremental edits (zed-industries/zed#57341), even
-; when `{}` is one text node. Do not remove combined to paper over that.
+; Do not set combined. Zed drops a combined YAML layer on incremental
+; edits (zed-industries/zed#57341). That is helm.zed#22: after typing
+; next to emptyDir: {}, every YAML key went plain while {{ }} stayed
+; colored. Per-node injection keeps other fragments on their own YAML
+; layer so an edit does not wipe the whole file.
 ((text) @content
- (#set! "language" "yaml")
- (#set! "combined"))
+ (#set! "language" "yaml"))

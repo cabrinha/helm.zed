@@ -92,7 +92,7 @@ Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/
 
 ## Empty mappings (`emptyDir: {}`)
 
-The grammar pin keeps `{}` as one text node, so a full parse highlights YAML correctly. Typing next to that mapping can still drop injected YAML highlighting until you reload the buffer. That is [zed#57341](https://github.com/zed-industries/zed/issues/57341): Zed's combined injection layer does not re-stitch `(text)` fragments on incremental parse. Neovim does. Reloading the file restores highlighting.
+The grammar pin keeps `{}` as one text node. YAML is injected per `(text)` node, not as one combined document. Zed's combined injection ([zed#57341](https://github.com/zed-industries/zed/issues/57341)) dropped every YAML key after the first keystroke next to `emptyDir: {}` while `{{ }}` stayed colored. Per-node injection keeps other fragments on their own YAML layer. Template actions are still highlighted by the Helm query. YAML across `{{ }}` holes is no longer one stitched document; that is the trade for highlighting that survives edits.
 
 ## Credits
 
