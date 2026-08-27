@@ -18,12 +18,11 @@ language = "Helm"
 [language_servers.helm.language_ids]
 Helm = "helm"
 
-# Vendored helm dialect in this repo. Rest-of-line empty-brace tokens on
-# top of ngalaiko/tree-sitter-go-template#53. `{}` stays one text node;
-# typing at EOL after emptyDir: {} stays on that line so YAML for keys
-# below is not prefixed with the edit. YAML is injected per (text) node,
-# not combined (zed#57341).
+# Vendored helm dialect in this repo. `{}` plus rest of line plus the
+# trailing newline is one text token, so an EOL insert after emptyDir: {}
+# stays in that node and YAML for keys below is not dropped. YAML is
+# injected per (text) node, not combined (zed#57341).
 [grammars.helm]
 repository = "https://github.com/cabrinha/helm.zed"
-commit = "22fd4dce6d9c48d31738aeca7a1f5b839f4fd2be"
+commit = "d4a62d114ffc784cf7df8ec294d8323d590de46d"
 path = "vendor/tree-sitter-helm"
