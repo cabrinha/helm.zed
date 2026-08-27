@@ -17,12 +17,17 @@ if ! command -v tree-sitter >/dev/null 2>&1; then
   PATH="$WORK/node_modules/.bin:$PATH"
 fi
 
-echo "Using $GRAMMAR_REPO @$GRAMMAR_COMMIT ($GRAMMAR_PATH)"
 echo "tree-sitter $(tree-sitter --version)"
-git clone --quiet "$GRAMMAR_REPO" "$WORK/grammar"
-git -C "$WORK/grammar" checkout --quiet "$GRAMMAR_COMMIT"
 
-DIALECT="$WORK/grammar/$GRAMMAR_PATH"
+if [[ -f "$ROOT/vendor/tree-sitter-helm/grammar.js" ]]; then
+  echo "Using local vendor/tree-sitter-helm"
+  DIALECT="$ROOT/vendor/tree-sitter-helm"
+else
+  echo "Using $GRAMMAR_REPO @$GRAMMAR_COMMIT ($GRAMMAR_PATH)"
+  git clone --quiet "$GRAMMAR_REPO" "$WORK/grammar"
+  git -C "$WORK/grammar" checkout --quiet "$GRAMMAR_COMMIT"
+  DIALECT="$WORK/grammar/$GRAMMAR_PATH"
+fi
 if [[ ! -f "$DIALECT/grammar.js" ]]; then
   echo "missing grammar.js in $GRAMMAR_PATH" >&2
   exit 1
@@ -50,11 +55,11 @@ done
 
 # The wasm Zed compiles is dialects/helm/src/parser.c. Fail if the pin
 # lost the empty-brace tokens from tree-sitter-go-template#53.
-if ! grep -F '[^{]+\\{\\}' "$DIALECT/src/grammar.json" >/dev/null; then
-  echo "pinned helm grammar.json is missing the empty-brace text token"
+if ! grep -F '[^{]+\\{\\}[^\\n{]*' "$DIALECT/src/grammar.json" >/dev/null; then
+  echo "helm grammar.json is missing the empty-brace rest-of-line text token"
   fail=1
 else
-  echo "ok  pinned grammar.json has empty-brace text tokens"
+  echo "ok  grammar.json keeps rest of line after {}"
 fi
 
 # Issue #22 / grammar half: `{` must not be its own text node.
@@ -92,6 +97,25 @@ elif grep -q '<text[^>]*>{</text>' <<<"$inc_xml"; then
   fail=1
 else
   echo "ok  incremental edit after {} keeps braces in one text node"
+fi
+
+# Typing at EOL after {} must not prefix the following keys' text node.
+# That fragment is injected as YAML; a leading "x" makes the YAML invalid
+# and keys such as configMap go plain (the #22 tail-wipe).
+if ! grep -q 'configMap' <<<"$inc_xml"; then
+  echo "incremental parse lost configMap text"
+  fail=1
+elif python3 -c "
+import re, sys
+xml = sys.stdin.read()
+nodes = re.findall(r'<text[^>]*>(.*?)</text>', xml, re.S)
+bad = [n for n in nodes if 'configMap' in n and n.lstrip().startswith('x')]
+sys.exit(1 if bad else 0)
+" <<<"$inc_xml"; then
+  echo "ok  keys below {} are not in a text node prefixed by the edit"
+else
+  echo "incremental edit after {} prefixed the following keys with x"
+  fail=1
 fi
 
 # Compile every query against the pinned helm grammar. Zed refuses to

@@ -92,7 +92,7 @@ Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/
 
 ## Empty mappings (`emptyDir: {}`)
 
-The grammar pin keeps `{}` as one text node. YAML is injected per `(text)` node, not as one combined document. Zed's combined injection ([zed#57341](https://github.com/zed-industries/zed/issues/57341)) dropped every YAML key after the first keystroke next to `emptyDir: {}` while `{{ }}` stayed colored. Per-node injection keeps other fragments on their own YAML layer. Template actions are still highlighted by the Helm query. YAML across `{{ }}` holes is no longer one stitched document; that is the trade for highlighting that survives edits.
+The vendored helm grammar keeps `{}` as one text token, including the rest of that line. YAML is injected per `(text)` node, not combined ([zed#57341](https://github.com/zed-industries/zed/issues/57341) drops a combined layer after the first keystroke). Typing at the end of `emptyDir: {}` stays in that line's node, so keys on later lines are still valid YAML fragments. Template actions (`{{ }}`) are highlighted by the Helm query.
 
 ## Credits
 
