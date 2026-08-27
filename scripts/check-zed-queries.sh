@@ -27,7 +27,7 @@ echo "Pin $GRAMMAR_REPO @$GRAMMAR_COMMIT ($GRAMMAR_PATH)"
 echo "tree-sitter $(tree-sitter --version)"
 echo "Queries compiled against $GRAMMAR_COMMIT (matches tests/grammar-pin.sha)"
 
-clone_pinned_grammar "$WORK/grammar"
+stage_helm_grammar "$WORK/dialect"
 
 SAMPLE="$ROOT/tests/charts/example/templates/deployment.yaml"
 if [[ ! -f "$SAMPLE" ]]; then
@@ -35,7 +35,7 @@ if [[ ! -f "$SAMPLE" ]]; then
   exit 1
 fi
 
-cd "$WORK/grammar/$GRAMMAR_PATH"
+cd "$DIALECT"
 fail=0
 
 shopt -s nullglob
@@ -83,6 +83,19 @@ if zed_injection_query_ok "$WORK/dual-injections.scm" 2>"$WORK/dual.err"; then
   fail=1
 else
   echo "ok  detector rejects dual captures: $(tr '\n' ' ' <"$WORK/dual.err")"
+fi
+
+# Combined injection is the #22 incremental drop in Zed. Must not ship.
+cat >"$WORK/combined-injections.scm" <<'EOF'
+((text) @content
+ (#set! "language" "yaml")
+ (#set! "combined"))
+EOF
+if zed_injection_query_ok "$WORK/combined-injections.scm" 2>"$WORK/comb.err"; then
+  echo "QUERY CHECK MISSED combined injection"
+  fail=1
+else
+  echo "ok  detector rejects combined injection: $(tr '\n' ' ' <"$WORK/comb.err")"
 fi
 
 # Invalid node type that made Helm vanish: backtick is not a token, raw

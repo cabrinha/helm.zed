@@ -103,6 +103,7 @@ The vendored helm grammar keeps `{}`, the rest of that line, and the trailing ne
 ```sh
 cargo test
 ./scripts/check-queries.sh
+./scripts/check-grammar.sh
 ./scripts/check-grammar-pin.sh
 ./scripts/check-zed-queries.sh
 ```

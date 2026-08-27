@@ -32,6 +32,12 @@ zed_injection_query_ok() {
     echo "missing required capture: content or injection.content" >&2
     return 1
   fi
+  # Combined YAML injection is zed#57341 / helm.zed#22: typing next to
+  # emptyDir: {} drops every YAML key. Inject each (text) node separately.
+  if grep -vE '^\s*;' "$file" | grep -Eq '(^|[^A-Za-z0-9_.])(injection\.)?combined($|[^A-Za-z0-9_.])'; then
+    echo "combined injection drops YAML on incremental parse in Zed (zed#57341)" >&2
+    return 1
+  fi
   return 0
 }
 

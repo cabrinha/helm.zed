@@ -13,11 +13,8 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 ensure_tree_sitter "$WORK"
 
-echo "Using $GRAMMAR_REPO @$GRAMMAR_COMMIT ($GRAMMAR_PATH)"
 echo "tree-sitter $(tree-sitter --version)"
-clone_pinned_grammar "$WORK/grammar"
-
-DIALECT="$WORK/grammar/$GRAMMAR_PATH"
+stage_helm_grammar "$WORK/dialect"
 if [[ ! -f "$DIALECT/grammar.js" ]]; then
   echo "missing grammar.js in $GRAMMAR_PATH" >&2
   exit 1

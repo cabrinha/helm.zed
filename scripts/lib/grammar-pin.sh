@@ -1,6 +1,6 @@
-# Shared pin for tree-sitter-go-template. Sourced by CI scripts.
+# Shared pin for the helm grammar Zed compiles. Sourced by CI scripts.
 # Keep GRAMMAR_COMMIT in sync with extension.toml [grammars.helm] commit
-# and tests/grammar-pin.sha.
+# and tests/grammar-pin.sha. After #32 that path is vendor/tree-sitter-helm.
 
 helm_zed_root() {
   local here
@@ -60,4 +60,20 @@ clone_pinned_grammar() {
     echo "missing grammar.js in $GRAMMAR_PATH at $GRAMMAR_COMMIT" >&2
     return 1
   fi
+}
+
+# Writable copy of the helm dialect. Prefer the working tree so CI tests
+# the vendored newline-after-{} lexer; clone the pin if vendor/ is absent.
+stage_helm_grammar() {
+  local dest="${1:?need dest}"
+  if [[ -f "$ROOT/$GRAMMAR_PATH/grammar.js" ]]; then
+    echo "Using local $GRAMMAR_PATH"
+    mkdir -p "$dest"
+    cp -a "$ROOT/$GRAMMAR_PATH/." "$dest/"
+    DIALECT="$dest"
+    return 0
+  fi
+  echo "Using $GRAMMAR_REPO @$GRAMMAR_COMMIT ($GRAMMAR_PATH)"
+  clone_pinned_grammar "$dest/repo"
+  DIALECT="$dest/repo/$GRAMMAR_PATH"
 }
