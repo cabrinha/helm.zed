@@ -48,7 +48,16 @@ for fixture in "$ROOT"/tests/fixtures/*; do
   check_fixture "$fixture"
 done
 
-# Issue #22: `{` must not be its own text node.
+# The wasm Zed compiles is dialects/helm/src/parser.c. Fail if the pin
+# lost the empty-brace tokens from tree-sitter-go-template#53.
+if ! grep -F '[^{]+\\{\\}' "$DIALECT/src/grammar.json" >/dev/null; then
+  echo "pinned helm grammar.json is missing the empty-brace text token"
+  fail=1
+else
+  echo "ok  pinned grammar.json has empty-brace text tokens"
+fi
+
+# Issue #22 / grammar half: `{` must not be its own text node.
 xml="$(printf 'emptyDir: {}\nfoo: bar\n' | tree-sitter parse --rebuild --xml 2>/dev/null)"
 if grep -q '<text[^>]*>{</text>' <<<"$xml"; then
   echo "empty mapping still split: '{' is its own text node"
@@ -61,6 +70,28 @@ fi
 if grep -q ERROR <<<"$xml"; then
   echo "empty mapping produced ERROR"
   fail=1
+fi
+
+# Same check after an incremental edit immediately after `{}`.
+# The grammar pin must survive tree-sitter's edit API; Zed combined
+# injection dropping after that point is zed-industries/zed#57341.
+fixture="$ROOT/tests/fixtures/empty-mapping.yaml"
+after_brace="$(python3 -c "
+from pathlib import Path
+t = Path('$fixture').read_text()
+i = t.index('{}', t.index('emptyDir: {}'))
+print(i + 2)
+")"
+inc_xml="$(tree-sitter parse --xml -q "$fixture" --edits "$after_brace 0 x" 2>/dev/null || true)"
+if [[ -z "$inc_xml" ]]; then
+  echo "incremental parse after {} produced no tree"
+  fail=1
+elif grep -q '<text[^>]*>{</text>' <<<"$inc_xml"; then
+  echo "incremental edit after {} split a lone '{' text node"
+  echo "$inc_xml"
+  fail=1
+else
+  echo "ok  incremental edit after {} keeps braces in one text node"
 fi
 
 # Compile every query against the pinned helm grammar. Zed refuses to

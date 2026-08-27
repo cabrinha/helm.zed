@@ -19,7 +19,8 @@ language = "Helm"
 Helm = "helm"
 
 # Pinned to the empty-braces lexer fix (ngalaiko/tree-sitter-go-template#53).
-# `{}` stays one text node so YAML combined injection survives incremental edits.
+# `{}` stays one text node on full and incremental tree-sitter parses.
+# Zed still drops combined YAML injection while typing; that is zed#57341.
 [grammars.helm]
 repository = "https://github.com/tzabbi/tree-sitter-go-template"
 commit = "ee8ba702dd0421c4e374b05175e2efbc6a0ecc0b"

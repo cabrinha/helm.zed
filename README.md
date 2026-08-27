@@ -90,6 +90,10 @@ helm-ls reads the `helm-ls` section of workspace configuration. Put that nested 
 
 Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/?tab=readme-ov-file#configuration-options).
 
+## Empty mappings (`emptyDir: {}`)
+
+The grammar pin keeps `{}` as one text node, so a full parse highlights YAML correctly. Typing next to that mapping can still drop injected YAML highlighting until you reload the buffer. That is [zed#57341](https://github.com/zed-industries/zed/issues/57341): Zed's combined injection layer does not re-stitch `(text)` fragments on incremental parse. Neovim does. Reloading the file restores highlighting.
+
 ## Credits
 
 Highlighting uses [tree-sitter-go-template](https://github.com/ngalaiko/tree-sitter-go-template), including the empty-mapping lexer fix from [tree-sitter-go-template#53](https://github.com/ngalaiko/tree-sitter-go-template/pull/53).
