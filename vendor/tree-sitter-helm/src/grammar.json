@@ -35,7 +35,7 @@
       "members": [
         {
           "type": "PATTERN",
-          "value": "[^{]+\\{\\}[^\\n{]*"
+          "value": "[^{]+\\{\\}[^\\n{]*\\n?"
         },
         {
           "type": "PATTERN",
@@ -43,7 +43,7 @@
         },
         {
           "type": "PATTERN",
-          "value": "\\{\\}[^\\n{]*"
+          "value": "\\{\\}[^\\n{]*\\n?"
         },
         {
           "type": "PATTERN",

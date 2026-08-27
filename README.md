@@ -92,7 +92,7 @@ Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/
 
 ## Empty mappings (`emptyDir: {}`)
 
-The vendored helm grammar keeps `{}` as one text token, including the rest of that line. YAML is injected per `(text)` node, not combined ([zed#57341](https://github.com/zed-industries/zed/issues/57341) drops a combined layer after the first keystroke). Typing at the end of `emptyDir: {}` stays in that line's node, so keys on later lines are still valid YAML fragments. Template actions (`{{ }}`) are highlighted by the Helm query.
+The vendored helm grammar keeps `{}`, the rest of that line, and the trailing newline as one text token so typing at EOL after `emptyDir: {}` does not sit on the next node's start. YAML is injected per `(text)` node, not combined ([zed#57341](https://github.com/zed-industries/zed/issues/57341)).
 
 ## Credits
 

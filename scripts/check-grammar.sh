@@ -55,11 +55,11 @@ done
 
 # The wasm Zed compiles is dialects/helm/src/parser.c. Fail if the pin
 # lost the empty-brace tokens from tree-sitter-go-template#53.
-if ! grep -F '[^{]+\\{\\}[^\\n{]*' "$DIALECT/src/grammar.json" >/dev/null; then
-  echo "helm grammar.json is missing the empty-brace rest-of-line text token"
+if ! grep -F '[^{]+\\{\\}[^\\n{]*\\n?' "$DIALECT/src/grammar.json" >/dev/null; then
+  echo "helm grammar.json is missing the empty-brace rest-of-line+newline text token"
   fail=1
 else
-  echo "ok  grammar.json keeps rest of line after {}"
+  echo "ok  grammar.json keeps rest of line and newline after {}"
 fi
 
 # Issue #22 / grammar half: `{` must not be its own text node.
@@ -97,6 +97,16 @@ elif grep -q '<text[^>]*>{</text>' <<<"$inc_xml"; then
   fail=1
 else
   echo "ok  incremental edit after {} keeps braces in one text node"
+fi
+
+# The {} line's text node must include the trailing newline so an EOL
+# insert is inside that node, not on the following keys' node start.
+full_xml="$(tree-sitter parse --xml -q "$ROOT/tests/fixtures/empty-mapping.yaml" 2>/dev/null || true)"
+if grep -q 'emptyDir: {}</text>' <<<"$full_xml"; then
+  echo "emptyDir {} text node stops at } (EOL insert would hit the next node)"
+  fail=1
+else
+  echo "ok  emptyDir {} text node includes the trailing newline"
 fi
 
 # Typing at EOL after {} must not prefix the following keys' text node.

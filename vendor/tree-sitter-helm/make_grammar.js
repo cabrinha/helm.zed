@@ -102,14 +102,14 @@ module.exports = function make_grammar(dialect) {
             text: (_) =>
                 choice(
                     // forbid '{{', the rest is valid.
-                    // Keep `{}` in the text token, plus the rest of that line.
-                    // Stopping at `}` made typing at EOL after emptyDir: {}
-                    // insert into the next text node, so YAML for keys below
-                    // started with the typed characters and those keys went
-                    // plain (helm.zed#22 tail-wipe).
-                    /[^{]+\{\}[^\n{]*/,
+                    // Keep `{}`, the rest of that line, and the trailing
+                    // newline in one token. Stopping at `}` (or at EOL
+                    // without the newline) puts an EOL insert on the next
+                    // (text) node's start. Zed then drops that node's YAML
+                    // layer, so keys below emptyDir: {} go plain.
+                    /[^{]+\{\}[^\n{]*\n?/,
                     /[^{]+/,
-                    /\{\}[^\n{]*/,
+                    /\{\}[^\n{]*\n?/,
                     /\{/
                 ),
 

@@ -2,11 +2,11 @@
 ; if @content and @injection.content are both set on the same pattern.
 ;
 ; Do not set combined. Zed drops a combined YAML layer on incremental
-; edits (zed-industries/zed#57341). Per-node injection keeps other
-; fragments on their own YAML layer.
+; edits (zed-industries/zed#57341).
 ;
-; The helm lexer keeps `{}` plus the rest of that line in one text
-; node so typing at EOL after emptyDir: {} does not prefix the next
-; node's YAML (keys below) with the typed characters.
+; The helm lexer keeps `{}`, the rest of that line, and the trailing
+; newline in one text node. An EOL insert after emptyDir: {} stays
+; inside that node, so YAML for keys on later lines is not dropped.
 ((text) @content
  (#set! "language" "yaml"))
+
