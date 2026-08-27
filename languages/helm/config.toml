@@ -1,12 +1,27 @@
 name = "Helm"
 grammar = "helm"
 line_comments = ["# "]
-path_suffixes = [".helmignore"]
+path_suffixes = [
+    "tpl",
+    "gotmpl",
+    "helm",
+    "yaml.gotmpl",
+    "yml.gotmpl",
+    "helmfile.yaml",
+    "helmfile.yml",
+    ".helmignore",
+]
+# Templates that open with an action, including helmfile and _helpers.tpl.
+# Path globs such as charts/*/templates/*.yaml still need file_types in settings.
+first_line_pattern = "^\\s*\\{\\{[-]?\\s*(if|range|with|define|block|template|include|/\\*)"
 tab_size = 2
 word_characters = ["-"]
 block_comment = ["{{/* ", " */}}"]
+autoclose_before = ";:.,=}])>"
 brackets = [
     { start = "{{", end = "}}", close = true, newline = false },
     { start = "{{-", end = "-}}", close = true, newline = false },
     { start = "(", end = ")", close = true, newline = false },
+    { start = "\"", end = "\"", close = true, newline = false },
+    { start = "`", end = "`", close = true, newline = false },
 ]

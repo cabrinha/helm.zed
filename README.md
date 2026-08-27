@@ -1,68 +1,104 @@
 # helm.zed
 
-Syntax highlighting for Helm templates using tree-sitter and integration of [helm-ls](https://github.com/mrjosh/helm-ls).
+Syntax highlighting for Helm templates using tree-sitter, plus [helm-ls](https://github.com/mrjosh/helm-ls).
 
 ## Installation
 
-Before the extension is working properly, you have to install the [helm-ls](https://github.com/mrjosh/helm-ls#installation-with-a-package-manager)
-and [yaml-languages-server](https://github.com/redhat-developer/yaml-language-server) with your preferred package manager.
+Install from the [Zed extension store](https://zed.dev/extensions/helm).
 
-Install this extension via the [Zed extension store](https://zed.dev/extensions/helm).
+The extension looks for `helm_ls`, then `helm-ls`, on PATH. If neither is there it downloads a helm-ls release. [yaml-language-server](https://github.com/redhat-developer/yaml-language-server) is optional; helm-ls uses it for Kubernetes schema diagnostics when it is installed.
 
-The extension relies on the PATH environment variable and first looks for 'helm_ls', then 'helm-ls'.
-If neither is available, an error is shown.
-
-## Configuration
-
-This is an example of providing configuration for the language server via Zed's `settings.json`.
-For full reference of possible values, refer to [helm-ls configuration section](https://github.com/mrjosh/helm-ls/?tab=readme-ov-file#configuration-options).
+You can also pin a binary:
 
 ```json
 {
-  ...
+  "lsp": {
+    "helm_ls": {
+      "binary": {
+        "path": "/usr/local/bin/helm_ls",
+        "arguments": ["serve"]
+      }
+    }
+  }
+}
+```
+
+## File detection
+
+`.tpl`, `.gotmpl`, `helmfile.yaml`, and `helmfile.yml` are Helm out of the box. Chart templates still share `.yaml` with ordinary YAML, so map those in `settings.json`:
+
+```json
+{
+  "file_types": {
+    "Helm": [
+      "**/templates/**/*.tpl",
+      "**/templates/**/*.yaml",
+      "**/templates/**/*.yml",
+      "**/templates/**/*.gotmpl",
+      "**/helmfile.d/**/*.yaml",
+      "**/helmfile.d/**/*.yml",
+      "helmfile.yaml",
+      "helmfile.yml",
+      "**/values*.yaml",
+      "**/values*.yml"
+    ]
+  }
+}
+```
+
+Leave `Chart.yaml` as YAML. It is chart metadata, not a template.
+
+If a `.yaml` file still opens as YAML, pick Helm in the language selector once, or add the glob above. helm-ls will not start on files that stay tagged as YAML, and yaml-language-server will flag `{{ }}` as errors.
+
+## Language server settings
+
+helm-ls reads the `helm-ls` section of workspace configuration. Put that nested object under `lsp.helm_ls.settings` (`lsp.helm` and `lsp.helm-ls` also work). These two shapes are equivalent:
+
+```json
+{
+  "lsp": {
+    "helm_ls": {
+      "settings": {
+        "yamlls": {
+          "enabled": false
+        }
+      }
+    }
+  }
+}
+```
+
+```json
+{
   "lsp": {
     "helm_ls": {
       "settings": {
         "helm-ls": {
           "logLevel": "info",
           "yamlls": {
-            "enabled": true
+            "enabled": true,
+            "enabledForFilesGlob": "*.{yaml,yml}"
           }
         }
       }
     }
-  },
-  "file_types": {
-    "Helm": [
-      "helmfile.yaml",
-      "helmfile.yml",
-      "Chart.yaml",
-      "Chart.yml",
-      "Chart.lock",
-      "requirements.yaml",
-      "requirements.yml",
-      "**/templates/**/*.tpl",
-      "**/templates/**/*.yaml",
-      "**/templates/**/*.yml",
-      "**/helmfile.d/**/*.yaml",
-      "**/helmfile.d/**/*.yml",
-    ],
-  },
+  }
 }
 ```
 
+`yamlls.enabled` only controls the yaml-language-server process that helm-ls starts. It does not disable Zed's own YAML language server. If CRDs are still underlined, the buffer is probably still language YAML. Use the `file_types` globs above.
+
+Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/?tab=readme-ov-file#configuration-options).
+
+## Empty mappings (`emptyDir: {}`)
+
+The vendored helm grammar keeps `{}`, the rest of that line, and the trailing newline as one text token so typing at EOL after `emptyDir: {}` does not sit on the next node's start. YAML is injected per `(text)` node, not combined ([zed#57341](https://github.com/zed-industries/zed/issues/57341)).
+
 ## Credits
 
-[https://github.com/ngalaiko/tree-sitter-go-template]
+Highlighting uses [tree-sitter-go-template](https://github.com/ngalaiko/tree-sitter-go-template), including the empty-mapping lexer fix from [tree-sitter-go-template#53](https://github.com/ngalaiko/tree-sitter-go-template/pull/53).
 
-## Release Process
+## Release process
 
-Every time the extension is released:
-
-1. **Bump the Version:**
-   Update the version number in Cargo.toml and extension.toml.
-
-2. **Update Extension Index:**
-   After releasing, update the extension entry in [zed-industries/extensions](http://github.com/zed-industries/extensions/) to reflect the new version.
-
-This ensures users always have access to the newest version.
+1. Bump the version in `Cargo.toml` and `extension.toml`.
+2. After release, update the entry in [zed-industries/extensions](https://github.com/zed-industries/extensions/).

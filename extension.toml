@@ -1,6 +1,6 @@
 id = "helm"
 name = "Helm"
-version = "0.0.6"
+version = "0.0.7"
 schema_version = 1
 authors = [
     "cabrinha <yuppie@hey.com>",
@@ -14,7 +14,15 @@ repository = "https://github.com/cabrinha/helm.zed"
 name = "helm_ls"
 language = "Helm"
 
+# helm-ls only treats languageId "helm" (lowercase) as a template document.
+[language_servers.helm.language_ids]
+Helm = "helm"
+
+# Vendored helm dialect in this repo. `{}` plus rest of line plus the
+# trailing newline is one text token, so an EOL insert after emptyDir: {}
+# stays in that node and YAML for keys below is not dropped. YAML is
+# injected per (text) node, not combined (zed#57341).
 [grammars.helm]
-repository = "https://github.com/ngalaiko/tree-sitter-go-template"
-commit = "aa71f63de226c5592dfbfc1f29949522d7c95fac"
-path = "dialects/helm"
+repository = "https://github.com/cabrinha/helm.zed"
+commit = "d4a62d114ffc784cf7df8ec294d8323d590de46d"
+path = "vendor/tree-sitter-helm"

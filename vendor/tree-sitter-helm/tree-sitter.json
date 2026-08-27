@@ -1,0 +1,16 @@
+{
+  "grammars": [
+    {
+      "name": "helm",
+      "camelcase": "Helm",
+      "scope": "source.helm",
+      "path": ".",
+      "file-types": ["helm", "tpl", "gotmpl", "yaml", "yml"]
+    }
+  ],
+  "metadata": {
+    "version": "0.0.0",
+    "license": "MIT",
+    "description": "Helm dialect of tree-sitter-go-template with rest-of-line empty-brace tokens"
+  }
+}
