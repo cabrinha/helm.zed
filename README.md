@@ -107,7 +107,7 @@ cargo test
 ./scripts/check-zed-queries.sh
 ```
 
-CI runs these on pull requests and on pushes to `main`.
+CI also packages with the `zed-extension` CLI and runs `ts_query_ls format --check languages`.
 
 ## Credits
 
