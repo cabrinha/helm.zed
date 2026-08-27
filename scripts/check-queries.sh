@@ -3,23 +3,19 @@
 # and check that Helm query files are valid against that grammar.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GRAMMAR_REPO="$(awk '/\[grammars.helm\]/{f=1} f && /^repository =/{gsub(/"/, "", $3); print $3; exit}' "$ROOT/extension.toml")"
-GRAMMAR_COMMIT="$(awk '/\[grammars.helm\]/{f=1} f && /^commit =/{gsub(/"/, "", $3); print $3; exit}' "$ROOT/extension.toml")"
-GRAMMAR_PATH="$(awk '/\[grammars.helm\]/{f=1} f && /^path =/{gsub(/"/, "", $3); print $3; exit}' "$ROOT/extension.toml")"
+# shellcheck source=lib/grammar-pin.sh
+source "$(cd "$(dirname "$0")" && pwd)/lib/grammar-pin.sh"
+
+load_grammar_pin
+assert_grammar_pin_lock
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-
-if ! command -v tree-sitter >/dev/null 2>&1; then
-  npm install --silent --no-fund --no-audit --prefix "$WORK" tree-sitter-cli@0.25.10
-  PATH="$WORK/node_modules/.bin:$PATH"
-fi
+ensure_tree_sitter "$WORK"
 
 echo "Using $GRAMMAR_REPO @$GRAMMAR_COMMIT ($GRAMMAR_PATH)"
 echo "tree-sitter $(tree-sitter --version)"
-git clone --quiet "$GRAMMAR_REPO" "$WORK/grammar"
-git -C "$WORK/grammar" checkout --quiet "$GRAMMAR_COMMIT"
+clone_pinned_grammar "$WORK/grammar"
 
 DIALECT="$WORK/grammar/$GRAMMAR_PATH"
 if [[ ! -f "$DIALECT/grammar.js" ]]; then

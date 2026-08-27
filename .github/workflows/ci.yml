@@ -19,6 +19,32 @@ jobs:
       - name: WASM build
         run: cargo build --target wasm32-wasip1 --release
 
+  grammar-pin:
+    name: Grammar pin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Check pin lock and generated files
+        run: bash scripts/check-grammar-pin.sh
+
+  zed-query-load:
+    name: Zed query load
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+      - name: Reject queries Zed cannot register
+        run: bash scripts/check-zed-queries.sh
+
   queries:
     name: Chart fixtures and queries
     runs-on: ubuntu-latest

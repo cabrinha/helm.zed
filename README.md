@@ -103,9 +103,11 @@ The vendored helm grammar keeps `{}`, the rest of that line, and the trailing ne
 ```sh
 cargo test
 ./scripts/check-queries.sh
+./scripts/check-grammar-pin.sh
+./scripts/check-zed-queries.sh
 ```
 
-CI runs both on pull requests and on pushes to `main`.
+CI runs these on pull requests and on pushes to `main`.
 
 ## Credits
 
