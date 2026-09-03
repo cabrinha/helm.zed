@@ -1,10 +1,13 @@
 name = "Helm"
 grammar = "helm"
 line_comments = ["# "]
+# Only suffixes that are unambiguously Helm. Bare `gotmpl` is claimed by
+# the gotmpl extension (hjr265/zed-gotmpl) and ties there resolve
+# arbitrarily, so `*.yaml.gotmpl`/`*.yml.gotmpl` (matched by Zed as compound
+# suffixes) are the most specific Helm template names we claim. Chart
+# templates that stay `*.yaml` still need `file_types` in settings.
 path_suffixes = [
     "tpl",
-    "gotmpl",
-    "helm",
     "yaml.gotmpl",
     "yml.gotmpl",
     "helmfile.yaml",

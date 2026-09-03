@@ -15,7 +15,7 @@ You can also pin a binary:
 ```json
 {
   "lsp": {
-    "helm_ls": {
+    "helm": {
       "binary": {
         "path": "/usr/local/bin/helm_ls",
         "arguments": ["serve"]
@@ -27,7 +27,7 @@ You can also pin a binary:
 
 ## File detection
 
-This matches the [official Zed Helm docs](https://zed.dev/docs/languages/helm). `.tpl`, `.gotmpl`, `helmfile.yaml`, and `helmfile.yml` are Helm out of the box. Chart templates still share `.yaml` with ordinary YAML, so map those in `settings.json`:
+`.tpl`, `*.yaml.gotmpl`, `*.yml.gotmpl`, `helmfile.yaml`, and `helmfile.yml` are Helm out of the box. Bare `.gotmpl` files belong to the gotmpl extension, so they are intentionally not claimed. Chart templates still share `.yaml` with ordinary YAML, so map those in `settings.json`:
 
 ```json
 {
@@ -56,15 +56,17 @@ If a `.yaml` file still opens as YAML, pick Helm in the language selector once, 
 
 ## Language server settings
 
-helm-ls reads the `helm-ls` section of workspace configuration. Put that nested object under `lsp.helm_ls.settings` (`lsp.helm` and `lsp.helm-ls` also work). These two shapes are equivalent:
+helm-ls reads the `helm-ls` section of workspace configuration. Put your settings flat under `lsp.helm.settings` (the language server ID from `extension.toml`); the extension nests them under `helm-ls` before sending:
 
 ```json
 {
   "lsp": {
-    "helm_ls": {
+    "helm": {
       "settings": {
+        "logLevel": "info",
         "yamlls": {
-          "enabled": false
+          "enabled": true,
+          "enabledForFilesGlob": "*.{yaml,yml}"
         }
       }
     }
@@ -72,23 +74,7 @@ helm-ls reads the `helm-ls` section of workspace configuration. Put that nested 
 }
 ```
 
-```json
-{
-  "lsp": {
-    "helm_ls": {
-      "settings": {
-        "helm-ls": {
-          "logLevel": "info",
-          "yamlls": {
-            "enabled": true,
-            "enabledForFilesGlob": "*.{yaml,yml}"
-          }
-        }
-      }
-    }
-  }
-}
-```
+If `yaml-language-server` is on your PATH, the extension passes its absolute path through as `yamlls.path` and `YAMLLS_PATH` (both are helm-ls's documented knobs for finding it). An explicit `yamlls.path` in your settings still wins.
 
 `yamlls.enabled` only controls the yaml-language-server process that helm-ls starts. It does not disable Zed's own YAML language server. If CRDs are still underlined, the buffer is probably still language YAML. Use the `file_types` globs above.
 

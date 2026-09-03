@@ -15,23 +15,16 @@ struct HelmExtension {
 }
 
 impl HelmExtension {
-    /// Keys users actually put under `lsp` in settings.json. The language
-    /// server id in extension.toml is `helm`, the display name is `helm_ls`,
-    /// and helm-ls's own config section is `helm-ls`.
-    const LSP_SETTING_KEYS: &'static [&'static str] = &["helm_ls", "helm-ls", "helm"];
-
-    fn lsp_settings(worktree: &zed::Worktree) -> LspSettings {
-        for key in Self::LSP_SETTING_KEYS {
-            if let Ok(settings) = LspSettings::for_worktree(key, worktree) {
-                if settings.binary.is_some()
-                    || settings.settings.is_some()
-                    || settings.initialization_options.is_some()
-                {
-                    return settings;
-                }
-            }
-        }
-        LspSettings::for_worktree(HELM_LS, worktree).unwrap_or_default()
+    /// User settings for this language server live under a single key: the
+    /// language server ID from extension.toml (`[language_servers.helm]`),
+    /// i.e. `lsp.helm` in settings.json. This matches the convention in
+    /// Zed's own extensions
+    /// (`LspSettings::for_worktree(server_id.as_ref(), worktree)`).
+    fn lsp_settings(
+        language_server_id: &LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> LspSettings {
+        LspSettings::for_worktree(language_server_id.as_ref(), worktree).unwrap_or_default()
     }
 
     fn language_server_binary_path(
@@ -145,14 +138,22 @@ impl HelmExtension {
         Ok(binary_path)
     }
 
-    fn helm_ls_configuration(&self, worktree: &zed::Worktree) -> serde_json::Value {
-        let user_settings = Self::lsp_settings(worktree)
+    fn helm_ls_configuration(
+        &self,
+        language_server_id: &LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> serde_json::Value {
+        // helm-ls requests `workspace/configuration` with section `"helm-ls"`,
+        // so nest the user's flat `lsp.helm.settings` object under that key.
+        // With a single known settings key there is exactly one shape to
+        // handle, no unwrapping/guessing.
+        let user_settings = Self::lsp_settings(language_server_id, worktree)
             .settings
             .unwrap_or_else(|| serde_json::json!({}));
-        let yamlls_path = worktree
-            .which("yaml-language-server")
-            .or_else(|| worktree.which("yaml-language-server.js"));
-        inject_yamlls_path(wrap_helm_ls_settings(user_settings), yamlls_path)
+        inject_yamlls_path(
+            wrap_helm_ls_settings(user_settings),
+            yamlls_path(worktree),
+        )
     }
 }
 
@@ -185,28 +186,25 @@ fn list_dir_names(path: &str) -> Vec<String> {
         .collect()
 }
 
-/// Pull the inner helm-ls config out of whatever shape the user wrote.
+/// Nest the flat user settings object under helm-ls's config section.
 ///
-/// Zed answers helm-ls's `workspace/configuration` request for section
-/// `"helm-ls"` with `returned_json["helm-ls"]`. If we pass the README shape
-/// through unchanged that works. If the user put `yamlls` at the top of
-/// `lsp.helm_ls.settings`, Zed would return null and helm-ls would keep
-/// defaults, including yamlls.enabled=true.
-fn unwrap_helm_ls_section(settings: serde_json::Value) -> serde_json::Value {
-    match settings {
-        serde_json::Value::Object(mut map) => {
-            if let Some(inner) = map.remove("helm-ls").or_else(|| map.remove("helm_ls")) {
-                inner
-            } else {
-                serde_json::Value::Object(map)
-            }
-        }
-        other => other,
-    }
+/// helm-ls asks for section `"helm-ls"` and unmarshals that into its config,
+/// so `lsp.helm.settings = { "yamlls": ... }` must be sent as
+/// `{ "helm-ls": { "yamlls": ... } }`.
+fn wrap_helm_ls_settings(user_settings: serde_json::Value) -> serde_json::Value {
+    serde_json::json!({ "helm-ls": user_settings })
 }
 
-fn wrap_helm_ls_settings(user_settings: serde_json::Value) -> serde_json::Value {
-    serde_json::json!({ "helm-ls": unwrap_helm_ls_section(user_settings) })
+/// Absolute path of a yaml-language-server on PATH, if one is installed.
+///
+/// helm-ls shells out to yaml-language-server for Kubernetes schema
+/// validation. Its config knob is `yamlls.path`, also settable via the
+/// `YAMLLS_PATH` env var, and its default executable is
+/// `yaml-language-server` when neither is set. Resolving the absolute path
+/// here avoids PATH lookup differences in Zed's spawned environment; an
+/// explicit user `yamlls.path` still wins via `or_insert` below.
+fn yamlls_path(worktree: &zed::Worktree) -> Option<String> {
+    worktree.which("yaml-language-server")
 }
 
 fn inject_yamlls_path(
@@ -243,7 +241,7 @@ impl zed::Extension for HelmExtension {
         language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<zed::Command> {
-        let lsp_settings = Self::lsp_settings(worktree);
+        let lsp_settings = Self::lsp_settings(language_server_id, worktree);
         let binary = lsp_settings.binary;
 
         let command = if let Some(path) = binary.as_ref().and_then(|b| b.path.clone()) {
@@ -264,10 +262,7 @@ impl zed::Extension for HelmExtension {
         let mut env: std::collections::HashMap<String, String> =
             binary.and_then(|b| b.env).unwrap_or_default();
 
-        if let Some(yamlls) = worktree
-            .which("yaml-language-server")
-            .or_else(|| worktree.which("yaml-language-server.js"))
-        {
+        if let Some(yamlls) = yamlls_path(worktree) {
             env.entry("YAMLLS_PATH".to_string()).or_insert(yamlls);
         }
 
@@ -280,18 +275,18 @@ impl zed::Extension for HelmExtension {
 
     fn language_server_initialization_options(
         &mut self,
-        _language_server_id: &LanguageServerId,
+        language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<Option<serde_json::Value>> {
-        Ok(Some(self.helm_ls_configuration(worktree)))
+        Ok(Some(self.helm_ls_configuration(language_server_id, worktree)))
     }
 
     fn language_server_workspace_configuration(
         &mut self,
-        _language_server_id: &zed::LanguageServerId,
+        language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<Option<serde_json::Value>> {
-        Ok(Some(self.helm_ls_configuration(worktree)))
+        Ok(Some(self.helm_ls_configuration(language_server_id, worktree)))
     }
 }
 
@@ -299,57 +294,12 @@ zed_extension_api::register_extension!(HelmExtension);
 
 #[cfg(test)]
 mod tests {
-    use super::{inject_yamlls_path, unwrap_helm_ls_section, wrap_helm_ls_settings};
+    use super::{inject_yamlls_path, wrap_helm_ls_settings};
     use zed_extension_api::serde_json::{json, Value};
 
     #[test]
-    fn unwraps_readme_nested_helm_ls_key() {
-        let input = json!({
-            "helm-ls": {
-                "yamlls": { "enabled": false }
-            }
-        });
-        assert_eq!(
-            unwrap_helm_ls_section(input),
-            json!({ "yamlls": { "enabled": false } })
-        );
-    }
-
-    #[test]
-    fn unwraps_underscore_key() {
-        let input = json!({
-            "helm_ls": {
-                "logLevel": "debug"
-            }
-        });
-        assert_eq!(
-            unwrap_helm_ls_section(input),
-            json!({ "logLevel": "debug" })
-        );
-    }
-
-    #[test]
-    fn passes_through_flat_yamlls_settings() {
+    fn wraps_flat_user_settings_under_helm_ls_section() {
         let input = json!({ "yamlls": { "enabled": false } });
-        assert_eq!(
-            unwrap_helm_ls_section(input.clone()),
-            json!({ "yamlls": { "enabled": false } })
-        );
-        assert_eq!(
-            wrap_helm_ls_settings(input),
-            json!({
-                "helm-ls": { "yamlls": { "enabled": false } }
-            })
-        );
-    }
-
-    #[test]
-    fn wrap_is_idempotent_for_readme_shape() {
-        let input = json!({
-            "helm-ls": {
-                "yamlls": { "enabled": false }
-            }
-        });
         assert_eq!(
             wrap_helm_ls_settings(input),
             json!({
