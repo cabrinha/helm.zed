@@ -8,4 +8,5 @@
 ; newline in one text node. An EOL insert after emptyDir: {} stays
 ; inside that node, so YAML for keys on later lines is not dropped.
 ((text) @content
-  (#set! "language" "yaml"))
+  (#set! "language" "yaml")
+  (#set! "combined"))
