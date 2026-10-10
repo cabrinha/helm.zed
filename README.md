@@ -82,7 +82,7 @@ Full helm-ls options: [helm-ls configuration](https://github.com/mrjosh/helm-ls/
 
 ## Empty mappings (`emptyDir: {}`)
 
-The vendored helm grammar keeps `{}`, the rest of that line, and the trailing newline as one text token so typing at EOL after `emptyDir: {}` does not sit on the next node's start. YAML is injected per `(text)` node, not combined ([zed#57341](https://github.com/zed-industries/zed/issues/57341)).
+The vendored helm grammar keeps `{}`, the rest of that line, and the trailing newline as one text token so typing at EOL after `emptyDir: {}` does not sit on the next node's start. YAML is injected combined across all `(text)` nodes so fragments between `{{ }}` keep their indentation context (#35). Zed can still drop combined ranges next to an edit ([zed#57341](https://github.com/zed-industries/zed/issues/57341), fix in [zed#63280](https://github.com/zed-industries/zed/pull/63280)).
 
 ## Testing
 
