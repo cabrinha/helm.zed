@@ -21,7 +21,7 @@ Helm = "helm"
 # Vendored helm dialect in this repo. `{}` plus rest of line plus the
 # trailing newline is one text token, so an EOL insert after emptyDir: {}
 # stays in that node and YAML for keys below is not dropped. YAML is
-# injected per (text) node, not combined (zed#57341).
+# injected combined across (text) nodes (#35); see zed#57341.
 [grammars.helm]
 repository = "https://github.com/cabrinha/helm.zed"
 commit = "d4a62d114ffc784cf7df8ec294d8323d590de46d"

@@ -85,17 +85,12 @@ else
   echo "ok  detector rejects dual captures: $(tr '\n' ' ' <"$WORK/dual.err")"
 fi
 
-# Combined injection is the #22 incremental drop in Zed. Must not ship.
-cat >"$WORK/combined-injections.scm" <<'EOF'
-((text) @content
- (#set! "language" "yaml")
- (#set! "combined"))
-EOF
-if zed_injection_query_ok "$WORK/combined-injections.scm" 2>"$WORK/comb.err"; then
-  echo "QUERY CHECK MISSED combined injection"
-  fail=1
+# Per-node injection breaks YAML for fragments that dedent after {{ }} (#35).
+if injection_is_combined "$ROOT/languages/helm/injections.scm"; then
+  echo "ok  injections.scm uses combined YAML injection"
 else
-  echo "ok  detector rejects combined injection: $(tr '\n' ' ' <"$WORK/comb.err")"
+  echo "QUERY FAILED injections.scm: must set combined (per-node YAML injection breaks #35)"
+  fail=1
 fi
 
 # Invalid node type that made Helm vanish: backtick is not a token, raw

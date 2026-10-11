@@ -153,25 +153,19 @@ injection_has_capture() {
 
 zed_injection_query_ok() {
   local file="$1"
-  if injection_has_capture "$file" content \
-    && injection_has_capture "$file" injection.content; then
+  if injection_has_capture "$file" content &&
+    injection_has_capture "$file" injection.content; then
     echo "both content and injection.content captures are present" >&2
     return 1
   fi
-  if injection_has_capture "$file" language \
-    && injection_has_capture "$file" injection.language; then
+  if injection_has_capture "$file" language &&
+    injection_has_capture "$file" injection.language; then
     echo "both language and injection.language captures are present" >&2
     return 1
   fi
-  if ! injection_has_capture "$file" content \
-    && ! injection_has_capture "$file" injection.content; then
+  if ! injection_has_capture "$file" content &&
+    ! injection_has_capture "$file" injection.content; then
     echo "missing required capture: content or injection.content" >&2
-    return 1
-  fi
-  # Combined YAML injection is zed#57341 / helm.zed#22: typing next to
-  # emptyDir: {} drops every YAML key. Inject each (text) node separately.
-  if grep -vE '^\s*;' "$file" | grep -Eq '(^|[^A-Za-z0-9_.])(injection\.)?combined($|[^A-Za-z0-9_.])'; then
-    echo "combined injection drops YAML on incremental parse in Zed (zed#57341)" >&2
     return 1
   fi
   return 0
@@ -206,17 +200,15 @@ else
   echo "ok  detector rejects dual captures: $(tr '\n' ' ' <"$WORK/dual.err")"
 fi
 
-# Combined injection is the #22 incremental drop in Zed. Must not ship.
-cat >"$WORK/combined-injections.scm" <<'EOF'
-((text) @content
- (#set! "language" "yaml")
- (#set! "combined"))
-EOF
-if zed_injection_query_ok "$WORK/combined-injections.scm" 2>"$WORK/comb.err"; then
-  echo "QUERY CHECK MISSED combined injection"
-  fail=1
+# Per-node YAML injection parses each (text) fragment between {{ }} as its
+# own document. A fragment that starts deep in a mapping and then dedents
+# (networkpolicy.yaml) is invalid YAML on its own and loses highlighting
+# on load (#35). Keep combined so YAML sees the whole indentation context.
+if grep -vE '^\s*;' "$injections" | grep -Eq '(^|[^A-Za-z0-9_.])(injection\.)?combined($|[^A-Za-z0-9_.])'; then
+  echo "ok  injections.scm uses combined YAML injection"
 else
-  echo "ok  detector rejects combined injection: $(tr '\n' ' ' <"$WORK/comb.err")"
+  echo "QUERY FAILED injections.scm: must set combined (per-node YAML injection breaks #35)"
+  fail=1
 fi
 
 # Builtin captures for include/tpl/sha512sum, which the old regex list missed.

@@ -17,28 +17,31 @@ query_has_capture() {
 # ("Error loading injection query: both content and injection.content captures are present").
 zed_injection_query_ok() {
   local file="$1"
-  if query_has_capture "$file" content \
-    && query_has_capture "$file" injection.content; then
+  if query_has_capture "$file" content &&
+    query_has_capture "$file" injection.content; then
     echo "both content and injection.content captures are present" >&2
     return 1
   fi
-  if query_has_capture "$file" language \
-    && query_has_capture "$file" injection.language; then
+  if query_has_capture "$file" language &&
+    query_has_capture "$file" injection.language; then
     echo "both language and injection.language captures are present" >&2
     return 1
   fi
-  if ! query_has_capture "$file" content \
-    && ! query_has_capture "$file" injection.content; then
+  if ! query_has_capture "$file" content &&
+    ! query_has_capture "$file" injection.content; then
     echo "missing required capture: content or injection.content" >&2
     return 1
   fi
-  # Combined YAML injection is zed#57341 / helm.zed#22: typing next to
-  # emptyDir: {} drops every YAML key. Inject each (text) node separately.
-  if grep -vE '^\s*;' "$file" | grep -Eq '(^|[^A-Za-z0-9_.])(injection\.)?combined($|[^A-Za-z0-9_.])'; then
-    echo "combined injection drops YAML on incremental parse in Zed (zed#57341)" >&2
-    return 1
-  fi
   return 0
+}
+
+# Per-node YAML injection parses each (text) fragment between {{ }} as its
+# own document. A fragment that starts deep in a mapping and then dedents
+# is invalid YAML on its own, so highlighting breaks on load (helm.zed#35).
+# Zed's incremental splice of combined layers is zed-industries/zed#57341.
+injection_is_combined() {
+  local file="$1"
+  grep -vE '^\s*;' "$file" | grep -Eq '(^|[^A-Za-z0-9_.])(injection\.)?combined($|[^A-Za-z0-9_.])'
 }
 
 # Required captures Zed looks up after Query::new succeeds.
@@ -49,20 +52,20 @@ zed_required_captures_ok() {
   local name
   name="$(basename "$file")"
   case "$name" in
-    brackets.scm)
-      query_has_capture "$file" open && query_has_capture "$file" close
-      ;;
-    indents.scm)
-      query_has_capture "$file" indent
-      ;;
-    outline.scm)
-      query_has_capture "$file" item && query_has_capture "$file" name
-      ;;
-    injections.scm)
-      zed_injection_query_ok "$file"
-      ;;
-    *)
-      return 0
-      ;;
+  brackets.scm)
+    query_has_capture "$file" open && query_has_capture "$file" close
+    ;;
+  indents.scm)
+    query_has_capture "$file" indent
+    ;;
+  outline.scm)
+    query_has_capture "$file" item && query_has_capture "$file" name
+    ;;
+  injections.scm)
+    zed_injection_query_ok "$file"
+    ;;
+  *)
+    return 0
+    ;;
   esac
 }

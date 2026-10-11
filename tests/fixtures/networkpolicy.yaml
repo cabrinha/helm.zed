@@ -1,0 +1,44 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "valkey.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "valkey.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {{- include "valkey.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Release.Namespace }}
+          podSelector:
+            matchLabels:
+              networkpolicy.valkey.net/valkey-access: "true"
+      ports:
+        - protocol: TCP
+          port: 6379 # Default Valkey database port
+        - protocol: TCP
+          port: 26379 # Sentinel port
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: alloy
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: alloy
+              app.kubernetes.io/name: alloy
+      ports:
+        - protocol: TCP
+          port: 9121 # Valkey/Redis Exporter port
+    - from:
+        - podSelector:
+            matchLabels: {{- include "valkey.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 6379 # Default Valkey database port
+        - protocol: TCP
+          port: 26379 # Sentinel port
